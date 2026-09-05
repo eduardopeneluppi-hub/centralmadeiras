@@ -14,6 +14,7 @@ import { brandGreenGradient, WHATSAPP_NUMBER } from './theme'
 import fachadaImg from './assets/fachada-central-madeiras.jpg'
 import banner1 from './assets/banners/banner-1.jpg'
 import banner2 from './assets/banners/banner-2.jpg'
+import banner3 from './assets/banners/banner-3.jpg'
 import nossosProdutosBtn from './assets/buttons/nossos-produtos.webp'
 import facaSeuPedidoBtn from './assets/buttons/faca-seu-pedido.webp'
 
@@ -72,7 +73,7 @@ function App() {
             }`}
           >
             <BannerRotator
-              images={[{ src: banner1, position: '5% 50%' }, banner2]}
+              images={[{ src: banner1, position: '5% 50%' }, banner2, banner3]}
               active={heroTitleDone}
               interval={5000}
             />

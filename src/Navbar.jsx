@@ -5,7 +5,7 @@ import logo from './assets/logo-central-madeiras-mark.webp'
 const LINKS = [
   { label: 'Início', href: '#inicio' },
   { label: 'Sobre', href: '#sobre' },
-  { label: 'Ambientes', href: '#ambientes' },
+  { label: 'Nossos Produtos', href: '#produtos' },
   { label: 'Contato', href: '#contato' },
 ]
 

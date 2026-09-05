@@ -87,6 +87,7 @@ function ArrowButton({ direction, onClick, className = '' }) {
 export default function Catalog() {
   const trackRef = useRef(null)
   const [selected, setSelected] = useState(null)
+  const [query, setQuery] = useState('')
 
   const scrollByCard = (direction) => {
     const track = trackRef.current
@@ -96,8 +97,26 @@ export default function Catalog() {
     track.scrollBy({ left: direction * step, behavior: 'smooth' })
   }
 
+  const filteredItems = CATALOG_ITEMS.filter((item) =>
+    item.label.toLowerCase().includes(query.trim().toLowerCase())
+  )
+
   return (
     <section className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-16 pt-6 sm:pb-20 sm:pt-8">
+      <div className="relative mx-auto mb-6 w-full max-w-[420px] sm:mb-8 sm:max-w-[500px]">
+        <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 fill-none stroke-neutral-400 stroke-2">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+        </svg>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar produto..."
+          className="w-full rounded-full border border-black/5 bg-white py-3 pl-11 pr-4 text-sm text-neutral-800 shadow-[0_8px_20px_-12px_rgba(0,0,0,0.3)] outline-none placeholder:text-neutral-400 focus:border-[#2e7d32]/40"
+        />
+      </div>
+
       <div className="relative">
         <ArrowButton
           direction="prev"
@@ -114,7 +133,7 @@ export default function Catalog() {
           ref={trackRef}
           className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-auto sm:w-[948px] sm:max-w-full sm:gap-6 sm:px-0"
         >
-          {CATALOG_ITEMS.map((item) => (
+          {filteredItems.map((item) => (
             <button
               key={item.label}
               type="button"
@@ -135,6 +154,12 @@ export default function Catalog() {
               </div>
             </button>
           ))}
+
+          {filteredItems.length === 0 && (
+            <p className="w-full py-10 text-center text-sm text-neutral-400">
+              Nenhum produto encontrado para "{query}".
+            </p>
+          )}
         </div>
       </div>
 

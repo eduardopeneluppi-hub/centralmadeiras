@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import mapImage from './assets/brazil-map.png'
 
@@ -30,6 +30,24 @@ export default function WorldMap({ lineColor = '#2e7d32' }) {
     return () => mq.removeEventListener('change', update)
   }, [])
 
+  const containerRef = useRef(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          observer.unobserve(el)
+        }
+      },
+      { threshold: 0.2 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   const lineWidth = isMobile ? 4 : 2.5
   const originRadius = isMobile ? 6 : 4.5
   const destRadius = isMobile ? 8 : 6
@@ -37,7 +55,7 @@ export default function WorldMap({ lineColor = '#2e7d32' }) {
   const pulseDest = isMobile ? 26 : 20
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl bg-neutral-50 p-4 sm:p-8" style={{ aspectRatio: '800 / 827' }}>
+    <div ref={containerRef} className="relative w-full overflow-hidden rounded-2xl bg-neutral-50 p-4 sm:p-8" style={{ aspectRatio: '800 / 827' }}>
       <img src={mapImage} alt="" className="absolute inset-4 h-[calc(100%-2rem)] w-[calc(100%-2rem)] object-contain sm:inset-8 sm:h-[calc(100%-4rem)] sm:w-[calc(100%-4rem)]" draggable={false} />
 
       <svg viewBox="0 0 800 827" className="absolute inset-4 h-[calc(100%-2rem)] w-[calc(100%-2rem)] select-none sm:inset-8 sm:h-[calc(100%-4rem)] sm:w-[calc(100%-4rem)]">
@@ -49,9 +67,12 @@ export default function WorldMap({ lineColor = '#2e7d32' }) {
             stroke="url(#path-gradient)"
             strokeWidth={lineWidth}
             initial={{ pathLength: 0 }}
-            whileInView={{ pathLength: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.5 * i, ease: 'easeOut', repeat: Infinity, repeatDelay: 3 }}
+            animate={inView ? { pathLength: 1 } : { pathLength: 0 }}
+            transition={
+              inView
+                ? { duration: 1, delay: 0.5 * i, ease: 'easeOut', repeat: Infinity, repeatDelay: 3 }
+                : { duration: 0 }
+            }
           />
         ))}
 

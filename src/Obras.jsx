@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import BlurText from './BlurText'
 
 import obra1 from './assets/obras/obra-1.jpg'
@@ -39,6 +39,7 @@ function ArrowButton({ direction, onClick, className = '' }) {
 
 export default function Obras() {
   const trackRef = useRef(null)
+  const [activeIndex, setActiveIndex] = useState(0)
 
   const scrollByCard = (direction) => {
     const track = trackRef.current
@@ -47,6 +48,39 @@ export default function Obras() {
     const step = card ? card.getBoundingClientRect().width + 16 : track.clientWidth * 0.8
     track.scrollBy({ left: direction * step, behavior: 'smooth' })
   }
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+    let raf
+    const handleScroll = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const cards = track.querySelectorAll('[data-obra-card]')
+        if (!cards.length) return
+        const trackRect = track.getBoundingClientRect()
+        const center = trackRect.left + trackRect.width / 2
+        let closestIndex = 0
+        let closestDistance = Infinity
+        cards.forEach((card, i) => {
+          const rect = card.getBoundingClientRect()
+          const cardCenter = rect.left + rect.width / 2
+          const distance = Math.abs(cardCenter - center)
+          if (distance < closestDistance) {
+            closestDistance = distance
+            closestIndex = i
+          }
+        })
+        setActiveIndex(closestIndex)
+      })
+    }
+    track.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => {
+      track.removeEventListener('scroll', handleScroll)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
 
   return (
     <section className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-16 pt-2 sm:pb-20 sm:pt-3">
@@ -75,13 +109,15 @@ export default function Obras() {
 
         <div
           ref={trackRef}
-          className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-12 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:gap-6 sm:px-0"
+          className="-mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto px-12 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:gap-6 sm:px-0"
         >
-          {OBRAS.map((item) => (
+          {OBRAS.map((item, i) => (
             <div
               key={item.label}
               data-obra-card
-              className="w-[calc(100vw-64px)] shrink-0 snap-center overflow-hidden rounded-[28px] bg-white shadow-[0_20px_45px_-20px_rgba(0,0,0,0.35)] ring-1 ring-black/5 sm:w-[340px]"
+              className={`w-[calc(100vw-64px)] shrink-0 snap-center overflow-hidden rounded-[28px] bg-white shadow-[0_20px_45px_-20px_rgba(0,0,0,0.35)] ring-1 ring-black/5 transition-all duration-300 sm:w-[340px] ${
+                i === activeIndex ? 'scale-100 opacity-100' : 'scale-[0.85] opacity-50'
+              }`}
             >
               <div className="aspect-[4/5] w-full overflow-hidden">
                 <img src={item.image} alt={item.label} className="h-full w-full object-cover" draggable={false} />

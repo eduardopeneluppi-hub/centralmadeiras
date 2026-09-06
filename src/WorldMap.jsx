@@ -1,87 +1,26 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import mapImage from './assets/brazil-map.png'
 
-// Coarse silhouette of Brazil's border, as (lat -> [lngMin, lngMax]) bands.
-// Not survey-accurate, just enough to read as "Brazil" in a dotted map.
-const BRAZIL_BANDS = [
-  { lat: 5, lngMin: -61, lngMax: -51 },
-  { lat: 3, lngMin: -67, lngMax: -50 },
-  { lat: 1, lngMin: -70, lngMax: -48 },
-  { lat: -1, lngMin: -71, lngMax: -45 },
-  { lat: -3, lngMin: -72, lngMax: -40 },
-  { lat: -5, lngMin: -73, lngMax: -35.5 },
-  { lat: -7, lngMin: -73, lngMax: -34.8 },
-  { lat: -9, lngMin: -72, lngMax: -35 },
-  { lat: -11, lngMin: -69, lngMax: -37 },
-  { lat: -13, lngMin: -66, lngMax: -38.5 },
-  { lat: -15, lngMin: -60, lngMax: -39 },
-  { lat: -17, lngMin: -58, lngMax: -39.5 },
-  { lat: -19, lngMin: -58, lngMax: -40 },
-  { lat: -21, lngMin: -57.5, lngMax: -41 },
-  { lat: -23, lngMin: -56.5, lngMax: -44 },
-  { lat: -25, lngMin: -56, lngMax: -47.5 },
-  { lat: -27, lngMin: -56, lngMax: -48.3 },
-  { lat: -29, lngMin: -56.5, lngMax: -49.5 },
-  { lat: -31, lngMin: -57, lngMax: -50.5 },
-  { lat: -33.5, lngMin: -57, lngMax: -52.5 },
-]
-
-function bandsBoundsAt(lat) {
-  if (lat >= BRAZIL_BANDS[0].lat) return BRAZIL_BANDS[0]
-  if (lat <= BRAZIL_BANDS[BRAZIL_BANDS.length - 1].lat) return BRAZIL_BANDS[BRAZIL_BANDS.length - 1]
-
-  for (let i = 0; i < BRAZIL_BANDS.length - 1; i++) {
-    const a = BRAZIL_BANDS[i]
-    const b = BRAZIL_BANDS[i + 1]
-    if (lat <= a.lat && lat >= b.lat) {
-      const t = (a.lat - lat) / (a.lat - b.lat)
-      return {
-        lngMin: a.lngMin + (b.lngMin - a.lngMin) * t,
-        lngMax: a.lngMax + (b.lngMax - a.lngMax) * t,
-      }
-    }
-  }
-  return BRAZIL_BANDS[BRAZIL_BANDS.length - 1]
+// Pixel coordinates on the 800x827 map image.
+const POINTS = {
+  belem: { x: 330, y: 140, label: 'Belém, PA' },
+  sinop: { x: 280, y: 330, label: 'Sinop, MT' },
+  portoVelho: { x: 100, y: 280, label: 'Porto Velho, RO' },
+  curitiba: { x: 420, y: 650, label: 'Curitiba, PR' },
+  limeira: { x: 480, y: 580, label: 'Limeira, SP' },
 }
 
-function buildBrazilDots() {
-  const dots = []
-  const latStep = 0.7
-  const lngStep = 0.7
-  for (let lat = 5.5; lat >= -34; lat -= latStep) {
-    const { lngMin, lngMax } = bandsBoundsAt(lat)
-    const rowIndex = Math.round((5.5 - lat) / latStep)
-    const offset = rowIndex % 2 === 0 ? 0 : lngStep / 2
-    for (let lng = lngMin + offset; lng <= lngMax; lng += lngStep) {
-      dots.push({ lat, lng })
-    }
-  }
-  return dots
-}
+const ORIGINS = [POINTS.belem, POINTS.sinop, POINTS.portoVelho, POINTS.curitiba]
+const DESTINATION = POINTS.limeira
 
 const createCurvedPath = (start, end) => {
   const midX = (start.x + end.x) / 2
-  const midY = Math.min(start.y, end.y) - 50
+  const midY = (start.y + end.y) / 2 - Math.abs(end.x - start.x) * 0.15
   return `M ${start.x} ${start.y} Q ${midX} ${midY} ${end.x} ${end.y}`
 }
 
-export default function WorldMap({
-  dots = [],
-  lineColor = '#2e7d32',
-  lngRange = [-180, 180],
-  latRange = [-90, 90],
-}) {
-  const [lngMin, lngMax] = lngRange
-  const [latMin, latMax] = latRange
-
-  const projectPoint = (lat, lng) => {
-    const x = ((lng - lngMin) / (lngMax - lngMin)) * 800
-    const y = ((latMax - lat) / (latMax - latMin)) * 400
-    return { x, y }
-  }
-
-  const gridDots = useMemo(() => buildBrazilDots(), [])
-
+export default function WorldMap({ lineColor = '#2e7d32' }) {
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 640px)')
@@ -91,41 +30,30 @@ export default function WorldMap({
     return () => mq.removeEventListener('change', update)
   }, [])
 
-  const lineWidth = isMobile ? 3 : 1.5
-  const pointRadius = isMobile ? 4 : 2.5
-  const pulseRadius = isMobile ? 14 : 9
+  const lineWidth = isMobile ? 4 : 2.5
+  const originRadius = isMobile ? 6 : 4.5
+  const destRadius = isMobile ? 8 : 6
+  const pulseOrigin = isMobile ? 20 : 15
+  const pulseDest = isMobile ? 26 : 20
 
   return (
-    <div className="relative aspect-[2/1] w-full overflow-hidden rounded-2xl bg-neutral-50">
-      <svg viewBox="0 0 800 400" className="absolute inset-0 h-full w-full select-none">
-        {gridDots.map((d, i) => {
-          const p = projectPoint(d.lat, d.lng)
-          return <circle key={i} cx={p.x} cy={p.y} r="2.4" fill="#00000055" />
-        })}
+    <div className="relative w-full overflow-hidden rounded-2xl bg-neutral-50 p-4 sm:p-8" style={{ aspectRatio: '800 / 827' }}>
+      <img src={mapImage} alt="" className="absolute inset-4 h-[calc(100%-2rem)] w-[calc(100%-2rem)] object-contain sm:inset-8 sm:h-[calc(100%-4rem)] sm:w-[calc(100%-4rem)]" draggable={false} />
 
-        {dots.map((dot, i) => {
-          const startPoint = projectPoint(dot.start.lat, dot.start.lng)
-          const endPoint = projectPoint(dot.end.lat, dot.end.lng)
-          return (
-            <motion.path
-              key={`path-${i}`}
-              d={createCurvedPath(startPoint, endPoint)}
-              fill="none"
-              stroke="url(#path-gradient)"
-              strokeWidth={lineWidth}
-              initial={{ pathLength: 0 }}
-              whileInView={{ pathLength: 1 }}
-              viewport={{ once: true }}
-              transition={{
-                duration: 1,
-                delay: 0.5 * i,
-                ease: 'easeOut',
-                repeat: Infinity,
-                repeatDelay: 3,
-              }}
-            />
-          )
-        })}
+      <svg viewBox="0 0 800 827" className="absolute inset-4 h-[calc(100%-2rem)] w-[calc(100%-2rem)] select-none sm:inset-8 sm:h-[calc(100%-4rem)] sm:w-[calc(100%-4rem)]">
+        {ORIGINS.map((origin, i) => (
+          <motion.path
+            key={`path-${i}`}
+            d={createCurvedPath(origin, DESTINATION)}
+            fill="none"
+            stroke="url(#path-gradient)"
+            strokeWidth={lineWidth}
+            initial={{ pathLength: 0 }}
+            whileInView={{ pathLength: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, delay: 0.5 * i, ease: 'easeOut', repeat: Infinity, repeatDelay: 3 }}
+          />
+        ))}
 
         <defs>
           <linearGradient id="path-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -136,22 +64,23 @@ export default function WorldMap({
           </linearGradient>
         </defs>
 
-        {dots.map((dot, i) => (
-          <g key={`points-${i}`}>
-            {[dot.start, dot.end].map((point, j) => {
-              const p = projectPoint(point.lat, point.lng)
-              return (
-                <g key={j}>
-                  <circle cx={p.x} cy={p.y} r={pointRadius} fill={lineColor} />
-                  <circle cx={p.x} cy={p.y} r={pointRadius} fill={lineColor} opacity="0.5">
-                    <animate attributeName="r" from={pointRadius} to={pulseRadius} dur="1.5s" begin="0s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" begin="0s" repeatCount="indefinite" />
-                  </circle>
-                </g>
-              )
-            })}
+        {ORIGINS.map((origin, i) => (
+          <g key={`origin-${i}`}>
+            <circle cx={origin.x} cy={origin.y} r={originRadius} fill={lineColor} />
+            <circle cx={origin.x} cy={origin.y} r={originRadius} fill={lineColor} opacity="0.5">
+              <animate attributeName="r" from={originRadius} to={pulseOrigin} dur="1.5s" begin="0s" repeatCount="indefinite" />
+              <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" begin="0s" repeatCount="indefinite" />
+            </circle>
           </g>
         ))}
+
+        <g>
+          <circle cx={DESTINATION.x} cy={DESTINATION.y} r={destRadius} fill={lineColor} />
+          <circle cx={DESTINATION.x} cy={DESTINATION.y} r={destRadius} fill={lineColor} opacity="0.55">
+            <animate attributeName="r" from={destRadius} to={pulseDest} dur="1.5s" begin="0s" repeatCount="indefinite" />
+            <animate attributeName="opacity" from="0.55" to="0" dur="1.5s" begin="0s" repeatCount="indefinite" />
+          </circle>
+        </g>
       </svg>
     </div>
   )

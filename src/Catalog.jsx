@@ -117,21 +117,21 @@ export default function Catalog() {
         />
       </div>
 
-      <div className="relative">
+      <div className="relative -mx-6 sm:mx-0 sm:w-[828px] sm:max-w-full">
         <ArrowButton
           direction="prev"
           onClick={() => scrollByCard(-1)}
-          className="absolute top-[38%] z-10 -translate-y-1/2 left-1 sm:-left-14 lg:-left-16"
+          className="absolute top-[38%] z-10 left-2 -translate-y-1/2"
         />
         <ArrowButton
           direction="next"
           onClick={() => scrollByCard(1)}
-          className="absolute top-[38%] z-10 -translate-y-1/2 right-1 sm:-right-14 lg:-right-16"
+          className="absolute top-[38%] z-10 right-2 -translate-y-1/2"
         />
 
         <div
           ref={trackRef}
-          className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-auto sm:w-[948px] sm:max-w-full sm:gap-6 sm:px-0"
+          className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-12 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6 sm:px-0"
         >
           {filteredItems.map((item) => (
             <button
@@ -139,7 +139,7 @@ export default function Catalog() {
               type="button"
               data-catalog-card
               onClick={() => setSelected(item)}
-              className="w-[calc(100vw-48px)] shrink-0 snap-center overflow-hidden rounded-[28px] bg-white text-left shadow-[0_20px_45px_-20px_rgba(0,0,0,0.35)] ring-1 ring-black/5 transition active:scale-[0.98] sm:w-[300px]"
+              className="w-[calc(100vw-64px)] shrink-0 snap-center overflow-hidden rounded-[28px] bg-white text-left shadow-[0_20px_45px_-20px_rgba(0,0,0,0.35)] ring-1 ring-black/5 transition active:scale-[0.98] sm:w-[260px]"
             >
               <div className="aspect-[4/5] w-full overflow-hidden">
                 <img
@@ -150,7 +150,7 @@ export default function Catalog() {
                 />
               </div>
               <div className="px-5 py-4">
-                <p className="text-[13px] uppercase leading-tight text-neutral-900 [font-family:var(--font-display)]">{item.label}</p>
+                <p className="text-[17px] uppercase leading-tight text-neutral-900 [font-family:var(--font-display)]">{item.label}</p>
               </div>
             </button>
           ))}

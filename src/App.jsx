@@ -4,7 +4,9 @@ import Intro from './Intro'
 import Navbar from './Navbar'
 import BlurText from './BlurText'
 import BannerRotator from './BannerRotator'
+import FloatingProducts from './FloatingProducts'
 import Catalog from './Catalog'
+import Obras from './Obras'
 import Origin from './Origin'
 import Testimonials from './Testimonials'
 import ProjectChat from './ProjectChat'
@@ -20,13 +22,13 @@ import facaSeuPedidoBtn from './assets/buttons/faca-seu-pedido.webp'
 
 function App() {
   const [showIntro, setShowIntro] = useState(true)
-  const [heroTitleDone, setHeroTitleDone] = useState(false)
   const [showCatalog, setShowCatalog] = useState(false)
+  const [showFloating, setShowFloating] = useState(false)
 
   useEffect(() => {
     if (showIntro) return
-    // title finishes blurring in ~2.6s after it starts, then holds for 3s
-    const t = setTimeout(() => setHeroTitleDone(true), 5600)
+    // hero title finishes blurring in ~2.6s after it becomes active
+    const t = setTimeout(() => setShowFloating(true), 2700)
     return () => clearTimeout(t)
   }, [showIntro])
 
@@ -50,10 +52,10 @@ function App() {
           />
         </div>
 
-        <div className="relative z-10 mx-auto min-h-[340px] w-full max-w-4xl px-6 pt-36 text-center sm:min-h-[560px] sm:pt-40">
+        <div className="relative z-10 mx-auto min-h-[300px] w-full max-w-4xl px-6 pt-36 text-center sm:min-h-[420px] sm:pt-40">
           <div
-            className={`absolute inset-x-6 top-36 translate-y-[7%] transition-opacity duration-700 sm:top-40 ${
-              heroTitleDone ? 'pointer-events-none opacity-0' : 'opacity-100'
+            className={`absolute inset-x-6 top-36 transition-opacity duration-700 sm:top-40 ${
+              showFloating ? 'pointer-events-none opacity-0' : 'opacity-100'
             }`}
           >
             <BlurText
@@ -68,15 +70,31 @@ function App() {
           </div>
 
           <div
-            className={`absolute inset-x-6 top-36 bottom-0 transition-opacity duration-700 sm:top-20 sm:translate-y-[3%] ${
-              heroTitleDone ? 'opacity-100' : 'pointer-events-none opacity-0'
+            className={`pointer-events-none absolute inset-x-0 top-36 -translate-y-[4%] transition-opacity duration-700 sm:top-40 sm:translate-y-0 ${
+              showFloating ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <BannerRotator
-              images={[{ src: banner1, position: '5% 50%' }, banner2, banner3]}
-              active={heroTitleDone}
-              interval={5000}
-            />
+            <div
+              className="flex flex-col items-center overflow-visible whitespace-nowrap leading-none tracking-tight text-white opacity-50 [font-family:var(--font-display)]"
+              style={{
+                maskImage: 'linear-gradient(to bottom, black 0%, black 25%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 25%, transparent 100%)',
+              }}
+            >
+              <span className="text-6xl uppercase sm:text-9xl">Qualidade</span>
+              <span className="text-6xl uppercase sm:text-9xl">Qualidade</span>
+              <span className="text-6xl uppercase sm:text-9xl">Qualidade</span>
+              <span className="text-6xl uppercase sm:text-9xl">Qualidade</span>
+              <span className="text-6xl uppercase sm:hidden">Qualidade</span>
+            </div>
+          </div>
+
+          <div
+            className={`absolute inset-x-6 top-36 -translate-y-[10%] transition-opacity duration-700 sm:top-40 sm:translate-y-0 ${
+              showFloating ? 'opacity-100' : 'pointer-events-none opacity-0'
+            }`}
+          >
+            <FloatingProducts active={showFloating} />
           </div>
         </div>
 
@@ -85,7 +103,7 @@ function App() {
             type="button"
             onClick={() => setShowCatalog((v) => !v)}
             aria-expanded={showCatalog}
-            className="relative z-10 -mx-[5%] block w-[110%] transition active:scale-[0.98]"
+            className="relative z-10 -mx-[10%] block w-[120%] translate-y-[15%] transition active:scale-[0.98] sm:-mx-[5%] sm:w-[110%]"
           >
             <img src={nossosProdutosBtn} alt="Nossos Produtos" className="w-full h-auto" draggable={false} />
           </button>
@@ -97,12 +115,20 @@ function App() {
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.45, ease: [0.65, 0, 0.35, 1] }}
-                className="overflow-hidden"
+                className="overflow-x-visible overflow-y-hidden"
               >
                 <Catalog />
               </motion.div>
             )}
           </AnimatePresence>
+
+          <div className="aspect-[16/9] w-full py-2">
+            <BannerRotator
+              images={[{ src: banner1, position: '5% 50%' }, banner2, banner3]}
+              active
+              interval={5000}
+            />
+          </div>
 
           <a
             href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na Central Madeiras.')}`}
@@ -113,6 +139,8 @@ function App() {
             <img src={facaSeuPedidoBtn} alt="Faça seu Pedido" className="w-full h-auto" draggable={false} />
           </a>
         </div>
+
+        <Obras />
 
         <Origin />
 

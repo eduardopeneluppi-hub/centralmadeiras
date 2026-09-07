@@ -12,6 +12,7 @@ import Origin from './Origin'
 import Testimonials from './Testimonials'
 import ProjectChat from './ProjectChat'
 import QuoteModal from './QuoteModal'
+import ContactModal from './ContactModal'
 import { brandGreenGradient, WHATSAPP_NUMBER } from './theme'
 
 import fachadaImg from './assets/fachada-central-madeiras.jpg'
@@ -25,6 +26,7 @@ function App() {
   const [showIntro, setShowIntro] = useState(true)
   const [showCatalog, setShowCatalog] = useState(false)
   const [showFloating, setShowFloating] = useState(false)
+  const [showContact, setShowContact] = useState(false)
 
   useEffect(() => {
     if (showIntro) return
@@ -36,7 +38,7 @@ function App() {
   return (
     <>
       {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
-      {!showIntro && <Navbar />}
+      {!showIntro && <Navbar onContact={() => setShowContact(true)} />}
       <main className="relative min-h-svh w-full overflow-hidden bg-white">
         <PatternBackground />
 
@@ -160,6 +162,7 @@ function App() {
       </main>
 
       <QuoteModal />
+      <ContactModal open={showContact} onClose={() => setShowContact(false)} />
     </>
   )
 }

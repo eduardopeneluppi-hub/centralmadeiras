@@ -5,13 +5,13 @@ import logo from './assets/logo-central-madeiras-mark.webp'
 const LINKS = [
   { label: 'Início', href: '#inicio' },
   { label: 'Sobre', href: '#sobre' },
-  { label: 'Nossos Produtos', href: '#produtos' },
-  { label: 'Contato', href: '#contato' },
+  { label: 'Obras', href: '#obras' },
+  { label: 'Contato', action: 'contact' },
 ]
 
 const spring = { type: 'spring', stiffness: 320, damping: 32, mass: 0.9 }
 
-export default function Navbar() {
+export default function Navbar({ onContact }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -75,18 +75,31 @@ export default function Navbar() {
             >
               {LINKS.map((link, i) => (
                 <motion.li
-                  key={link.href}
+                  key={link.label}
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0, transition: { ...spring, delay: i * 0.04 } }}
                   exit={{ opacity: 0, y: -8, transition: { duration: 0.15, delay: (LINKS.length - 1 - i) * 0.03 } }}
                 >
-                  <a
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="block rounded-2xl px-4 py-3 text-[15px] font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white"
-                  >
-                    {link.label}
-                  </a>
+                  {link.action === 'contact' ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false)
+                        onContact?.()
+                      }}
+                      className="block w-full rounded-2xl px-4 py-3 text-left text-[15px] font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <a
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className="block rounded-2xl px-4 py-3 text-[15px] font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      {link.label}
+                    </a>
+                  )}
                 </motion.li>
               ))}
             </motion.ul>

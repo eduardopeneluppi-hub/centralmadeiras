@@ -137,7 +137,7 @@ export default function Obras() {
   }, [])
 
   return (
-    <section className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-16 pt-2 sm:pb-20 sm:pt-3">
+    <section id="obras" className="relative z-10 mx-auto w-full max-w-6xl scroll-mt-28 px-6 pb-16 pt-2 sm:pb-20 sm:pt-3">
       <div className="flex flex-col items-center text-center">
         <BlurText
           text="Obras"

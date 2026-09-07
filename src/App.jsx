@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Intro from './Intro'
+import PatternBackground from './PatternBackground'
 import Navbar from './Navbar'
 import BlurText from './BlurText'
 import BannerRotator from './BannerRotator'
@@ -37,6 +38,8 @@ function App() {
       {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
       {!showIntro && <Navbar />}
       <main className="relative min-h-svh w-full overflow-hidden bg-white">
+        <PatternBackground />
+
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-[55vh] overflow-hidden"
           style={{

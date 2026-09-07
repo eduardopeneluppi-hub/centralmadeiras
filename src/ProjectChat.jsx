@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import logoMark from './assets/logo-central-madeiras-mark.webp'
 import BlurText from './BlurText'
+import PatternBackground from './PatternBackground'
 import { WHATSAPP_NUMBER } from './theme'
 
 export default function ProjectChat() {
@@ -33,8 +34,10 @@ export default function ProjectChat() {
   }
 
   return (
-    <div className="relative z-10 -mt-10 rounded-t-[40px] bg-white pb-24 pt-16 shadow-[0_-25px_60px_-20px_rgba(0,0,0,0.25)] sm:pb-28 sm:pt-20">
-      <section className="mx-auto w-full max-w-6xl px-6">
+    <div className="relative z-10 -mt-10 overflow-hidden rounded-t-[40px] bg-white pb-24 pt-16 shadow-[0_-25px_60px_-20px_rgba(0,0,0,0.25)] sm:pb-28 sm:pt-20">
+      <PatternBackground />
+
+      <section className="relative mx-auto w-full max-w-6xl px-6">
         <div className="flex flex-col items-center text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#2e7d32]">
             Fale com a gente
@@ -135,7 +138,7 @@ export default function ProjectChat() {
               </div>
 
               {/* home indicator */}
-              <div className="flex justify-center bg-white/90 pb-2 pt-1 backdrop-blur">
+              <div className="flex justify-center rounded-b-[34px] bg-white/90 pb-2 pt-1 backdrop-blur">
                 <span className="h-1 w-28 rounded-full bg-neutral-900/70" />
               </div>
             </div>

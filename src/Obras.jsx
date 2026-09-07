@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import BlurText from './BlurText'
 
@@ -42,6 +43,8 @@ const OBRAS = [
   },
 ]
 
+const EXTENDED = [OBRAS[OBRAS.length - 1], ...OBRAS, OBRAS[0]]
+
 const BADGE_POSITIONS = [
   '-top-3 left-3 rotate-[-4deg]',
   '-bottom-1 -right-2 -translate-y-[60%] rotate-[3deg]',
@@ -51,7 +54,7 @@ const BADGE_POSITIONS = [
 function Badge({ text, position, delay }) {
   return (
     <motion.div
-      className={`absolute z-10 flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-neutral-800 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.4)] ring-1 ring-black/5 ${position}`}
+      className={`absolute z-10 flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-neutral-800 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.4)] ring-1 ring-black/5 sm:gap-2.5 sm:px-5 sm:py-3 sm:text-base ${position}`}
       initial={{ opacity: 0, y: 6, scale: 0.9 }}
       animate={{ opacity: 1, y: [0, -6, 0], scale: 1 }}
       transition={{
@@ -60,7 +63,7 @@ function Badge({ text, position, delay }) {
         y: { duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: delay + 0.5 },
       }}
     >
-      <span className="h-2 w-2 shrink-0 rounded-full bg-[#2e7d32]" />
+      <span className="h-2 w-2 shrink-0 rounded-full bg-[#2e7d32] sm:h-2.5 sm:w-2.5" />
       {text}
     </motion.div>
   )
@@ -88,51 +91,119 @@ function ArrowButton({ direction, onClick, className = '' }) {
 
 export default function Obras() {
   const trackRef = useRef(null)
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [activeIndex, setActiveIndex] = useState(1)
   const [hasScrolled, setHasScrolled] = useState(false)
 
-  const scrollByCard = (direction) => {
+  const measureClosestIndex = () => {
+    const track = trackRef.current
+    if (!track) return 1
+    const cards = track.querySelectorAll('[data-obra-card]')
+    if (!cards.length) return 1
+    const trackRect = track.getBoundingClientRect()
+    const center = trackRect.left + trackRect.width / 2
+    let closestIndex = 0
+    let closestDistance = Infinity
+    cards.forEach((card, i) => {
+      const rect = card.getBoundingClientRect()
+      const cardCenter = rect.left + rect.width / 2
+      const distance = Math.abs(cardCenter - center)
+      if (distance < closestDistance) {
+        closestDistance = distance
+        closestIndex = i
+      }
+    })
+    return closestIndex
+  }
+
+  const scrollToIndex = (index, behavior = 'smooth') => {
     const track = trackRef.current
     if (!track) return
-    const card = track.querySelector('[data-obra-card]')
-    const step = card ? card.getBoundingClientRect().width + 16 : track.clientWidth * 0.8
-    track.scrollBy({ left: direction * step, behavior: 'smooth' })
+    const card = track.querySelectorAll('[data-obra-card]')[index]
+    if (!card) return
+    card.scrollIntoView({ behavior, inline: 'center', block: 'nearest' })
   }
+
+  const scrollByCard = (direction) => {
+    scrollToIndex(measureClosestIndex() + direction, 'smooth')
+  }
+
+  useLayoutEffect(() => {
+    scrollToIndex(1, 'auto')
+    setActiveIndex(1)
+  }, [])
 
   useEffect(() => {
     const track = trackRef.current
     if (!track) return
     let raf
-    const handleScroll = () => {
+    let fallbackTimer
+    const supportsScrollEnd = 'onscrollend' in window
+
+    const syncActive = () => {
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
-        const cards = track.querySelectorAll('[data-obra-card]')
-        if (!cards.length) return
-        const trackRect = track.getBoundingClientRect()
-        const center = trackRect.left + trackRect.width / 2
-        let closestIndex = 0
-        let closestDistance = Infinity
-        cards.forEach((card, i) => {
-          const rect = card.getBoundingClientRect()
-          const cardCenter = rect.left + rect.width / 2
-          const distance = Math.abs(cardCenter - center)
-          if (distance < closestDistance) {
-            closestDistance = distance
-            closestIndex = i
-          }
-        })
-        setActiveIndex(closestIndex)
+        setActiveIndex(measureClosestIndex())
       })
+    }
+
+    const jumpTo = (index) => {
+      const card = track.querySelectorAll('[data-obra-card]')[index]
+      if (!card) return
+      cancelAnimationFrame(raf)
+
+      const cards = track.querySelectorAll('[data-obra-card]')
+      cards.forEach((el) => {
+        el.style.transition = 'none'
+      })
+
+      const trackRect = track.getBoundingClientRect()
+      const cardRect = card.getBoundingClientRect()
+      const delta = cardRect.left + cardRect.width / 2 - (trackRect.left + trackRect.width / 2)
+      track.scrollLeft += delta
+
+      flushSync(() => {
+        setActiveIndex(index)
+      })
+
+      // commit the transition-less style before re-enabling, so the class
+      // change above isn't retroactively animated
+      void track.offsetHeight
+
+      requestAnimationFrame(() => {
+        cards.forEach((el) => {
+          el.style.transition = ''
+        })
+      })
+    }
+
+    const correctLoop = () => {
+      const idx = measureClosestIndex()
+      if (idx === 0) {
+        jumpTo(OBRAS.length)
+      } else if (idx === EXTENDED.length - 1) {
+        jumpTo(1)
+      }
+    }
+
+    const handleScroll = () => {
+      syncActive()
+      if (!supportsScrollEnd) {
+        clearTimeout(fallbackTimer)
+        fallbackTimer = setTimeout(correctLoop, 80)
+      }
     }
     const handleFirstScroll = () => setHasScrolled(true)
 
     track.addEventListener('scroll', handleScroll, { passive: true })
     track.addEventListener('scroll', handleFirstScroll, { passive: true, once: true })
-    handleScroll()
+    if (supportsScrollEnd) track.addEventListener('scrollend', correctLoop)
+
     return () => {
       track.removeEventListener('scroll', handleScroll)
       track.removeEventListener('scroll', handleFirstScroll)
+      if (supportsScrollEnd) track.removeEventListener('scrollend', correctLoop)
       cancelAnimationFrame(raf)
+      clearTimeout(fallbackTimer)
     }
   }, [])
 
@@ -145,15 +216,15 @@ export default function Obras() {
           stepDuration={0.7}
           animateBy="words"
           direction="top"
-          className="justify-center text-3xl uppercase leading-[1.15] text-[#2e7d32] [font-family:var(--font-display)] sm:text-5xl"
+          className="justify-center text-3xl uppercase leading-[1.15] text-[#2e7d32] [font-family:var(--font-display)] sm:text-7xl"
         />
 
-        <p className="mb-1 mt-3 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
+        <p className="mb-1 mt-3 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500 sm:mt-5 sm:text-lg sm:tracking-[0.25em]">
           Projetos entregues com nossa madeira
         </p>
       </div>
 
-      <div className="relative mx-auto mt-10 sm:mt-12 sm:w-[1068px] sm:max-w-full">
+      <div className="relative mx-auto mt-10 sm:mt-12 sm:w-[1248px] sm:max-w-full">
         <div
           className="absolute left-1/2 top-1/2 -z-10 h-56 w-screen -translate-x-1/2 -translate-y-1/2 bg-[#2e7d32]"
           style={{
@@ -175,13 +246,13 @@ export default function Obras() {
 
         <div
           ref={trackRef}
-          className="-mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto px-12 py-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:gap-6 sm:px-[calc(50%-170px)] sm:py-8"
+          className="-mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto px-12 py-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:gap-6 sm:px-[calc(50%-200px)] sm:py-8"
         >
-          {OBRAS.map((item, i) => (
+          {EXTENDED.map((item, i) => (
             <div
-              key={item.label}
+              key={`${item.label}-${i}`}
               data-obra-card
-              className={`relative w-[calc(100vw-64px)] shrink-0 snap-center transition-all duration-300 sm:w-[340px] ${
+              className={`relative w-[calc(100vw-64px)] shrink-0 snap-center transition-all duration-300 sm:w-[400px] ${
                 i === activeIndex ? 'scale-100 opacity-100' : 'scale-[0.85] opacity-50'
               }`}
             >
@@ -195,7 +266,7 @@ export default function Obras() {
                 <Badge key={text} text={text} position={BADGE_POSITIONS[bi]} delay={bi * 0.15} />
               ))}
 
-              {i === 0 && (
+              {i === 1 && (
                 <AnimatePresence>
                   {!hasScrolled && (
                     <motion.div

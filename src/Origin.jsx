@@ -11,9 +11,9 @@ export default function Origin() {
           stepDuration={0.7}
           animateBy="words"
           direction="top"
-          className="max-w-2xl justify-center text-3xl uppercase leading-[1.15] text-neutral-900 [font-family:var(--font-display)] sm:text-4xl"
+          className="max-w-2xl justify-center text-3xl uppercase leading-[1.15] text-neutral-900 [font-family:var(--font-display)] sm:max-w-3xl sm:text-6xl"
         />
-        <p className="mt-4 max-w-xl text-sm text-neutral-500">
+        <p className="mt-4 max-w-xl text-sm text-neutral-500 sm:mt-6 sm:max-w-2xl sm:text-lg">
           Trabalhamos com madeira de procedência legalizada, vinda de áreas de manejo florestal
           certificado em diferentes regiões do Brasil até chegar até você em Limeira e região.
         </p>
